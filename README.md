@@ -14,27 +14,66 @@
 - Контекстное меню по правому клику: пауза автономного движения и выход.
 - GitHub Actions workflow для сборки Windows-артефакта.
 
-## Быстрый запуск на Windows
+## Установка на Windows в одну команду
 
-Нужны Windows 10/11, Python 3.10+ и микрофон.
+Нужны Windows 10/11, установленный `uv` и микрофон. Python отдельно ставить не нужно: `uv` сам скачает подходящий интерпретатор и создаст окружение.
+
+В PowerShell:
 
 ```powershell
-git clone git@github.com:monaxovdulov/windows-voice-creature.git
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/monaxovdulov/windows-voice-creature/main/scripts/install.ps1'))) -Start"
+```
+
+Команда скачает проект в `%LOCALAPPDATA%\WindowsVoiceCreature`, выполнит `uv sync`, создаст ярлык на рабочем столе и запустит существо.
+
+Если сразу нужны голосовые команды, добавьте скачивание русской Vosk-модели:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/monaxovdulov/windows-voice-creature/main/scripts/install.ps1'))) -WithVoiceModel -Start"
+```
+
+Модель `vosk-model-small-ru-0.22` скачивается в папку `models/`. Архив весит примерно 44 MB, после распаковки занимает больше места.
+
+Повторный запуск после установки:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\WindowsVoiceCreature\scripts\start.ps1"
+```
+
+Полезные флаги установщика:
+
+| Флаг | Что делает |
+| --- | --- |
+| `-WithVoiceModel` | Скачивает русскую Vosk-модель для офлайн-распознавания речи. |
+| `-Start` | Запускает приложение после установки. |
+| `-NoShortcut` | Не создает ярлык на рабочем столе. |
+| `-Dev` | Ставит dev-зависимости: `pytest`, `ruff`, `pyinstaller`. |
+| `-InstallDir "C:\Path\To\App"` | Устанавливает проект в указанную папку. |
+
+## Быстрый запуск из клона репозитория
+
+Нужны Windows 10/11, `uv` и микрофон.
+
+```powershell
+git clone https://github.com/monaxovdulov/windows-voice-creature.git
 cd windows-voice-creature
 
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+uv sync
+.\scripts\start.ps1
+```
 
-python -m screen_creature
+Для разработки:
+
+```powershell
+uv sync --extra dev
+uv run pytest
 ```
 
 Без Vosk-модели существо запустится, но голосовые команды будут выключены. Для включения речи скачайте русскую модель:
 
 ```powershell
 .\scripts\download_vosk_model.ps1
-python -m screen_creature
+.\scripts\start.ps1
 ```
 
 Скрипт скачивает `vosk-model-small-ru-0.22` в папку `models/`.
